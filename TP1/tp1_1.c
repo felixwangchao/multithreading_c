@@ -1,0 +1,73 @@
+/* 
+ * Multithreading TP1
+ */
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+
+void handler_child(int sig)
+{
+   printf("%d : Mon fils est mort\n", getpid()); 
+}
+
+
+
+int main ()
+{
+    int pid = 0;
+    sigset_t mask;
+    struct sigaction action;
+
+    switch (pid = fork()) {
+    case -1 :
+        perror("Erreur creation fils\n");
+        break;
+    case 0 :
+        printf("%d : Fils démarré\n", getpid());
+
+        // Reglage du masque de signaux
+        sigfillset(&mask);
+        sigdelset(&mask, SIGUSR1);
+        sigprocmask(SIG_SETMASK, &mask, NULL);
+        
+      
+        while (1) {
+            sleep(1);
+            printf("%d : Fils\n", getpid());
+        }
+
+        break;
+    default :
+	
+	  // Mise en place du handler
+        action.sa_handler = handler_child;
+        action.sa_flags = 0;
+        sigaction(SIGCHLD, &action, NULL);
+
+
+	
+        printf("%d : Pere continue\n", getpid());
+        
+        // Reglage du masque de signaux
+        sigfillset(&mask);
+        sigdelset(&mask, SIGUSR1);
+        sigdelset(&mask, SIGCHLD);
+        sigprocmask(SIG_SETMASK, &mask, NULL);
+
+        sleep(10);
+
+        kill(pid, SIGUSR1);
+
+        while (1) {
+            sleep(1);
+            printf("%d : Pere attente\n", getpid());
+        }
+    }
+
+    return 0;
+}
+
+

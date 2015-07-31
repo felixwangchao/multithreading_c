@@ -1,0 +1,86 @@
+/*
+ * Programmation systeme et Multithreading TP2
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>     // Fork
+#include <sys/types.h>  // Semaphores
+#include <sys/ipc.h>
+#include <sys/sem.h>
+
+
+union semun {
+    int              val;    /* Value for SETVAL */
+    struct semid_ds *buf;    /* Buffer for IPC_STAT, IPC_SET */
+    unsigned short  *array;  /* Array for GETALL, SETALL */
+    struct seminfo  *__buf;  /* Buffer for IPC_INFO
+                                (Linux-specific) */
+};
+
+
+
+
+int main ()
+{
+    int pid = 0;
+
+    char chaine[10];
+
+    // Creation du semaphore
+    int id; // Identifiant du semaphore
+    key_t key;
+    id = semget(key, 1, 0666 | IPC_CREAT);
+
+    printf("Semid : %d\n", id);
+
+    // Initialisation du semaphore
+    union semun init; // Pour initialiser le semaphore
+    init.val = 1;
+    semctl(id, 0, SETVAL, init);
+		semctl(id, 1, SETVAL, init);	
+		
+    // Buffer du semaphore pour definir son comportement
+    struct sembuf bufsem_p;
+    bufsem_p.sem_num = 0;
+    bufsem_p.sem_flg = SEM_UNDO;
+    bufsem_p.sem_op = -1; // P(S)
+
+    struct sembuf bufsem_v;
+    bufsem_v.sem_num = 0;
+    bufsem_v.sem_flg = SEM_UNDO;
+    bufsem_v.sem_op = 1; // V(S)
+
+    switch (pid = fork()) {
+    case -1 :
+        perror("Erreur creation fils\n");
+        break;
+    case 0 :
+        printf("%d : Fils\n", getpid());
+
+        while (1) {
+            semop(id, &bufsem_p, 1);
+            printf("%d : Donnez la chaine au fils\n", getpid());
+            scanf("%s", chaine);
+            semop(id, &bufsem_v, 1);
+        }
+
+        break;
+    default :
+        printf("%d : Pere\n", getpid());
+
+        while (1) {
+            semop(id, &bufsem_p, 1);
+            printf("%d : Donnez la chaine au pere\n", getpid());
+            scanf("%s", chaine);
+            semop(id, &bufsem_v, 1);
+        }
+        
+
+
+    } 
+
+    semctl(id, 0, IPC_RMID, 0);
+
+    return 0;
+}

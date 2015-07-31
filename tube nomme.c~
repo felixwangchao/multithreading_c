@@ -1,0 +1,39 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include <time.h>
+#include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+int main()
+{
+ int tube_ER, tube_RE;
+ int token=0;
+ int taille_tube = 10;
+ char buf_p[10];
+ 
+ mkfifo("/tmp/tube__re", S_IRUSR | S_IWUSR);
+ mkfifo("/tmp/tube_re_em", S_IRUSR | S_IWUSR);
+
+ tube_ER = open("/tmp/tube_em_re", O_WRONLY);
+ tube_RE = open("/tmp/tube_re_em", O_RDONLY);
+
+ sprintf(buf_p, "%d", ++token);
+ write(tube_ER, buf_p, taille_tube);
+
+ while(token<1000)
+ {
+	read(tube_RE,buf_p,taille_tube);
+	printf("%d:%d\n",getpid(),atoi(buf_p));
+	token = atoi(buf_p);
+	sprintf(buf_p,"%d",++token);
+	write(tube_ER,buf_p,taille_tube);
+ }
+
+printf("pere fini\n");
+return 0;
+
+}

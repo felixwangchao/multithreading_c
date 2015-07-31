@@ -1,0 +1,18 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<sys/types.h>
+#include<sys/stat.h>
+#include<fcntl.h>
+#include<unistd.h>
+
+int main(){
+FILE *p;
+char buf[100];
+p = fopen("a.txt","r");
+while(fgets(buf,100,p)!=NULL)
+	{
+		printf("%s\n",buf);
+	}
+return 0;
+}
+

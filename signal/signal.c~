@@ -1,0 +1,65 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+
+int i=0;
+
+
+void handler_child(int sig)
+{  
+   i++;
+   printf("%d : try %d \n", getpid(),i); 
+ //  exit(0);	
+}
+
+void handler_child1(int sig)
+{  
+  printf("%d:alarm work\n",getpid());
+  exit(0);
+}
+
+int main(){
+	
+	int pid;
+	
+	 struct sigaction action;
+	 action.sa_handler = handler_child;
+     action.sa_flags = 0;
+     sigaction(SIGUSR1, &action, NULL);
+
+
+	 struct sigaction action1;
+	 action1.sa_handler = handler_child1;
+     action1.sa_flags = 0;
+     sigaction(SIGALRM, &action1, NULL);
+
+	 switch(pid=fork()){
+		case -1:
+			perror("error\n");
+			break;
+	
+		case 0:
+			i=i+10;
+		//	alarm(3);
+			pause();
+		//	while(1);
+			printf("*****ok\n");
+			exit(0);
+			break;
+
+		default:
+			sleep(2);
+			kill(pid,10);
+			break;			
+
+
+	}
+
+	sleep(2);
+	return 0;
+
+
+}
+
